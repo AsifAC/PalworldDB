@@ -1,17 +1,17 @@
 import discord
 from discord.ext import commands
-from discord import BanEntry, Member
-from discord.ext.commands import has_permissions, MissingPermissions
+from discord import Interaction
 
-from apikey import *
+from tempkey import *
 
 intents = discord.Intents.all()
 intents.message_content = True
-bot = commands.Bot(command_prefix='-', intents=intents)
+bot = commands.Bot(command_prefix = "-", intents = intents)
 
 # * ---------------------BOT EVENTS--------------------- * #
 @bot.event
 async def on_ready():
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game("PalWorld Database!"))
     print("PalWorldDB Status: [ONLINE]")
     print("----------------------------")
 
@@ -24,17 +24,28 @@ async def on_member_join(member):
 async def on_member_remove(member):
     channel = bot.get_channel(1210382696535040040)
     await channel.send("Goodbye! Hope to see you again!")
-    
-# @bot.event
-# async def on_message(message):
-#     if message.content == "Dumb":
-#         await message.delete()
-#         await message.channel.send("That word is banned")
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("You don't have the required arguments! :rolling eyes:")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You don't have the required permissions! :angry:")
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    channel = reaction.message.channel
+    await channel.send(f"**{user.name} added:** {reaction.emoji}")
+
+@bot.event
+async def on_reaction_remove(reaction, user):
+    channel = reaction.message.channel
+    await channel.send(f"**{user.name} removed:** {reaction.emoji}")
     
 # * ---------------------BOT COMMANDS--------------------- * #
 @bot.command()
 async def test(ctx):
-    await ctx.send("Bot is in BETA test mode")
+    await ctx.send("Bot is in BETA")
     
 @bot.command(pass_context = True)
 async def join(ctx):
@@ -51,27 +62,22 @@ async def leave(ctx):
         await ctx.send("I left the voice channel!")
     else:
         await ctx.send("[Voice Channel Not Found]: I am not in a voice channel!")
-
-@bot.command()
-async def shutdown(ctx):
-   await ctx.send("Shutting down bot!")
-   await bot.close()
         
 @bot.command()
 @commands.has_permissions(kick_members = True)
 async def kick(ctx, member: discord.Member, *, reason = None):
-    await member.kick(reason=reason)
+    await member.kick(reason = reason)
     await ctx.send(f"The User: **[{member}]** has been kicked!")
-
-@kick.error
-async def kick_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You don't have permission to kick people!")
 
 @bot.command()
 @commands.has_permissions(ban_members = True)
 async def ban(ctx, member: discord.Member, *, reason = None):
     await member.ban(reason = reason)
     await ctx.send(f"The User: **[{member}]** has been terminated!")
+    
+@bot.command()
+async def shutdown(ctx):
+   await ctx.send("Shutting down bot!")
+   await bot.close()
         
 bot.run(BOT_TOKEN) #* -- BOT TOKEN IS IN A SEPERATE PRIVATE PYTHON FILE
